@@ -2,3 +2,4 @@ __pycache__
 venv
 .env
 sample_data
+.DS_Store
