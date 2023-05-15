@@ -25,14 +25,18 @@ st.header("Upload Customer Data")
 customers_file = st.file_uploader("Upload a csv file with customers data", type=["csv"])
 
 st.header("Upload Product Data")
-products_file = st.file_uploader("Upload a csv file with products data", type=["csv"]) 
+products_file = st.file_uploader("Upload a csv file with products data", type=["csv"])
 
 st.header("Upload Orders Data")
-orders_file = st.file_uploader("Upload a csv file with orders data", type=["csv"]) 
+orders_file = st.file_uploader("Upload a csv file with orders data", type=["csv"])
+
+st.header("Upload Orders with Products Data")
+orders_products_file = st.file_uploader("Upload a csv file with orders including product/items data", type=["csv"])
 
 is_customers_valid = False
 is_products_valid = False
 is_orders_valid = False
+is_orders_products_valid = False
 
 if customers_file is not None:
   users_dataframe = pd.read_csv(customers_file)
@@ -66,7 +70,18 @@ if orders_file is not None:
   with st.expander("Orders Preview"):
     o_preview_number = st.radio("Orders to preview", [10, 20, 50, 100], index=1, horizontal=True)
     st.write(order_dataframe.head(o_preview_number))
+    
+if orders_products_file is not None:
+  order_products_dataframe = pd.read_csv(orders_products_file)
+  is_orders_products_valid = validate_file(order_products_dataframe, type="orders_products")
+  
+  if not is_orders_products_valid:
+    st.stop()
 
-if is_customers_valid and is_products_valid and is_orders_valid:
+  with st.expander("Orders Products Preview"):
+    op_preview_number = st.radio("Orders Products to preview", [10, 20, 50, 100], index=1, horizontal=True)
+    st.write(order_products_dataframe.head(op_preview_number))
+
+if is_customers_valid and is_products_valid and is_orders_valid and is_orders_products_valid:
   st.subheader("Chat about your data")
-  process_data(users_dataframe, products_dataframe, order_dataframe)
+  process_data(users_dataframe, products_dataframe, order_dataframe, order_products_dataframe)

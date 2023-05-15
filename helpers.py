@@ -1,3 +1,4 @@
+from langchain.agents import create_pandas_dataframe_agent
 from langchain import OpenAI
 import streamlit as st
 import pandas as pd
@@ -9,6 +10,7 @@ CUSTOMERS_COLUMNS = [
   "customer_city",
   "customer_state",
 ]
+
 PRODUCT_COLUMNS = [
   "product_id",
   "product_category_name",
@@ -20,6 +22,7 @@ PRODUCT_COLUMNS = [
   "product_height_cm",
   "product_width_cm",
 ]
+
 ORDER_COLUMNS = [
   "order_id",
   "customer_id",
@@ -29,6 +32,16 @@ ORDER_COLUMNS = [
   "order_delivered_carrier_date",
   "order_delivered_customer_date",
   "order_estimated_delivery_date",
+]
+
+ORDER__PRODUCT_COLUMNS = [
+  "order_id",
+  "order_item_id",
+  "product_id",
+  "seller_id",
+  "shipping_limit_date",
+  "price",
+  "freight_value"
 ]
 
 def validate_file(dataframe, type="customers"):
@@ -42,10 +55,12 @@ def validate_file(dataframe, type="customers"):
     columns = PRODUCT_COLUMNS
   elif type == "orders":
     columns = ORDER_COLUMNS
+  elif type == "orders_products":
+    columns = ORDER__PRODUCT_COLUMNS
   else:
     st.error(f"Please upload a valid {type} file", icon="🚨")
     return False
-    
+
   missing_columns = [column for column in columns if column not in dataframe.columns]
 
   if not all([column in dataframe.columns for column in columns]):
@@ -55,7 +70,7 @@ def validate_file(dataframe, type="customers"):
   return True
   
   
-def process_data(customers_dataframe, products_dataframe, orders_dataframe):
+def process_data(customers_dataframe, products_dataframe, orders_dataframe, orders_products_dataframe):
   # Total number of customers
   total_customers = customers_dataframe.shape[0]
   # st.write(f"Total number of customers: {total_customers}")
@@ -78,21 +93,13 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe):
   
   if question:
     llm = OpenAI(temperature=0.9)
-    promt = "Knowing that there are {} customers, {} unique customers, {} products, {} unique products, {} orders and {} unique orders, answer the following questions:\n\nQ: How many customers are there?\nA: {} customers\n\nQ: How many unique customers are there?\nA: {} unique customers\n\nQ: How many products are there?\nA: {} products\n\nQ: How many unique products are there?\nA: {} unique products\n\nQ: How many orders are there?\nA: {} orders\n\nQ: How many unique orders are there?\nA: {} unique orders\n\nQ: {}".format(
-    # promt = "Knowing that there are {} customers, {} unique customers, {} products, {} unique products, {} orders and {} unique orders, answer the following question: {}".format(
-      total_customers,
-      total_unique_customers,
-      total_products,
-      total_unique_products,
-      total_orders,
-      total_unique_orders,
-      total_customers,
-      total_unique_customers,
-      total_products,
-      total_unique_products,
-      total_orders,
-      total_unique_orders,
-      question
-    )
-    answer = llm(promt)
+    customers_orders_df = pd.merge(customers_dataframe, orders_dataframe, on="customer_id")
+    customers_orders_products_items_df = pd.merge(customers_orders_df, orders_products_dataframe, on="order_id")
+    customers_orders_products_df = pd.merge(customers_orders_products_items_df, products_dataframe, on="product_id")
+
+    agent = create_pandas_dataframe_agent(llm, customers_orders_products_df, verbose=True)
+    with st.spinner("Getting answer..."):
+      answer = agent.run(question)
+    st.success("Answer retrieved!", icon="✅")
+    st.balloons()
     st.write(answer)
