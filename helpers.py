@@ -89,7 +89,7 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
   #total number of unique orders
   total_unique_orders = orders_dataframe["order_id"].nunique()
   
-  question = st.text_input("Enter questions about your data here, ex: How many customers are there?")
+  question = st.text_area("Enter questions about your data here, ex: How many customers are there?")
   
   if question:
     llm = OpenAI(temperature=0.9)
@@ -102,4 +102,4 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
       answer = agent.run(question)
     st.success("Answer retrieved!", icon="✅")
     st.balloons()
-    st.write(answer)
+    st.markdown(answer, unsafe_allow_html=False)
