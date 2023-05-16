@@ -1,5 +1,7 @@
+from streamlit_pandas_profiling import st_profile_report
 from langchain.agents import create_pandas_dataframe_agent
 from langchain import OpenAI
+import pandas_profiling
 import streamlit as st
 import pandas as pd
 
@@ -70,7 +72,7 @@ def validate_file(dataframe, type="customers"):
   return True
   
   
-def process_data(customers_dataframe, products_dataframe, orders_dataframe, orders_products_dataframe):
+def process_data(customers_dataframe, products_dataframe, orders_dataframe, orders_products_dataframe, temperature=0.9, max_tokens=300):
   # Total number of customers
   total_customers = customers_dataframe.shape[0]
   # st.write(f"Total number of customers: {total_customers}")
@@ -91,11 +93,12 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
   
   question = st.text_area("Enter questions about your data here, ex: How many customers are there?")
   
+  customers_orders_df = pd.merge(customers_dataframe, orders_dataframe, on="customer_id")
+  customers_orders_products_items_df = pd.merge(customers_orders_df, orders_products_dataframe, on="order_id")
+  customers_orders_products_df = pd.merge(customers_orders_products_items_df, products_dataframe, on="product_id")
+
   if question:
-    llm = OpenAI(temperature=0.9)
-    customers_orders_df = pd.merge(customers_dataframe, orders_dataframe, on="customer_id")
-    customers_orders_products_items_df = pd.merge(customers_orders_df, orders_products_dataframe, on="order_id")
-    customers_orders_products_df = pd.merge(customers_orders_products_items_df, products_dataframe, on="product_id")
+    llm = OpenAI(temperature=temperature)
 
     agent = create_pandas_dataframe_agent(llm, customers_orders_products_df, verbose=True)
     with st.spinner("Getting answer..."):
@@ -103,3 +106,7 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
     st.success("Answer retrieved!", icon="✅")
     st.balloons()
     st.markdown(answer, unsafe_allow_html=False)
+    
+  with st.expander("Preview data"):
+    pr = customers_orders_products_df.profile_report()
+    st_profile_report(pr)
