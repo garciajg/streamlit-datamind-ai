@@ -1,7 +1,7 @@
-from streamlit_pandas_profiling import st_profile_report
+# from streamlit_pandas_profiling import st_profile_report
 from langchain.agents import create_pandas_dataframe_agent
 from langchain import OpenAI
-import pandas_profiling
+# import pandas_profiling
 import streamlit as st
 import pandas as pd
 
@@ -107,6 +107,6 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
     st.balloons()
     st.markdown(answer, unsafe_allow_html=False)
     
-  with st.expander("Preview data"):
-    pr = customers_orders_products_df.profile_report()
-    st_profile_report(pr)
+  # with st.expander("Preview data"):
+  #   pr = customers_orders_products_df.profile_report()
+  #   st_profile_report(pr)
