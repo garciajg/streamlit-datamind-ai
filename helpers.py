@@ -98,7 +98,7 @@ def process_data(customers_dataframe, products_dataframe, orders_dataframe, orde
   customers_orders_products_df = pd.merge(customers_orders_products_items_df, products_dataframe, on="product_id")
 
   if question:
-    llm = OpenAI(temperature=temperature)
+    llm = OpenAI(temperature=temperature, model_name="gpt-4")
 
     agent = create_pandas_dataframe_agent(llm, customers_orders_products_df, verbose=True)
     with st.spinner("Getting answer..."):
